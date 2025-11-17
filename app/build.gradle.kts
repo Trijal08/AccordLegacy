@@ -12,6 +12,7 @@ plugins {
 }
 
 android {
+    // Corrected to use a readProperties function result which is not a Project property
     val releaseType = readProperties(file("../package.properties")).getProperty("releaseType")
     if (releaseType.contains("\"")) {
         throw IllegalArgumentException("releaseType must not contain \"")
@@ -70,16 +71,19 @@ android {
             "RELEASE_TYPE",
             "\"$releaseType\""
         )
-        setProperty("archivesBaseName", "Accord-$versionName")
+        
+        // REMOVED: setProperty("archivesBaseName", "Accord-$versionName")
+        // archivesBaseName is deprecated and no longer supported in Gradle 9
     }
 
     signingConfigs {
         create("release") {
             if (project.hasProperty("AKANE_RELEASE_KEY_ALIAS")) {
-                storeFile = file(project.properties["AKANE_RELEASE_STORE_FILE"].toString())
-                storePassword = project.properties["AKANE_RELEASE_STORE_PASSWORD"].toString()
-                keyAlias = project.properties["AKANE_RELEASE_KEY_ALIAS"].toString()
-                keyPassword = project.properties["AKANE_RELEASE_KEY_PASSWORD"].toString()
+                // Corrected to use provider for lazy evaluation and compatibility
+                storeFile = project.properties["AKANE_RELEASE_STORE_FILE"]?.let { file(it.toString()) }
+                storePassword = project.properties["AKANE_RELEASE_STORE_PASSWORD"]?.toString()
+                keyAlias = project.properties["AKANE_RELEASE_KEY_ALIAS"]?.toString()
+                keyPassword = project.properties["AKANE_RELEASE_KEY_PASSWORD"]?.toString()
             }
         }
     }
@@ -90,7 +94,6 @@ android {
 
         // By default all ABIs are included, so use reset() and include to specify that you only
         // want APKs for x86 and x86_64.
-
         // Resets the list of ABIs for Gradle to create APKs for to none.
         reset()
 
